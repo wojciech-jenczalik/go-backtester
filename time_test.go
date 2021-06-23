@@ -85,7 +85,7 @@ func TestGiven_interval_1_day_when_converted_period_should_be_1_year(t *testing.
 	from, _ := time.Parse(dateLayout, "2021-01-01")
 	to, _ := time.Parse(dateLayout, "2021-01-02")
 
-	expectedPeriod, expectedLimit := PeriodAnnual, 1
+	expectedPeriod, expectedLimit := periodAnnual, 1
 	period, limit := convertTimeToYears(from, to)
 
 	if period != expectedPeriod || limit != expectedLimit {
@@ -104,7 +104,7 @@ func TestGiven_interval_3690_days_when_converted_period_should_be_11_years(t *te
 	from, _ := time.Parse(dateLayout, "2021-01-01")
 	to, _ := time.Parse(dateLayout, "2031-02-08")
 
-	expectedPeriod, expectedLimit := PeriodAnnual, 11
+	expectedPeriod, expectedLimit := periodAnnual, 11
 	period, limit := convertTimeToYears(from, to)
 
 	if period != expectedPeriod || limit != expectedLimit {

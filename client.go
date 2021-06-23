@@ -9,7 +9,7 @@ import (
 const (
 	FmpUrl        = "https://financialmodelingprep.com/api/v3"
 	FmpApiKeyKey  = "apikey"
-	PeriodAnnual  = "annual"
+	periodAnnual  = "annual"
 	PeriodQuarter = "quarter"
 )
 

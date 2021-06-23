@@ -9,8 +9,7 @@ import (
 )
 
 type strategy struct {
-	portfolioSize int
-	criteria      []criterion
+	criteria []criterion
 }
 
 type criterion struct {
@@ -36,12 +35,12 @@ const (
 	highest = "HIGHEST"
 )
 
-func (s *strategy) evaluateTopCompanies(companies []companyInfo, date time.Time) []companyInfo {
+func (s *strategy) evaluateTopCompanies(companies []companyInfo, date time.Time, portfolioSize int) []companyInfo {
 	evaluationResult := s.evaluateCriteria(companies, date)
 	evaluationResult = filterOutErrorResults(evaluationResult)
 	evaluationResult = s.normalizeResultsTo01(evaluationResult)
 	finalResults := s.calculateFinalResults(evaluationResult)
-	return s.selectTopCompanies(finalResults, companies)
+	return s.selectTopCompanies(finalResults, companies, portfolioSize)
 }
 
 var criteriaUnknown = errors.New("unknown criteria for company evaluation were provided")
@@ -149,7 +148,7 @@ func (s *strategy) calculateFinalResults(results []criteriaEvaluationResult) map
 	return finalEvaluationResults
 }
 
-func (s *strategy) selectTopCompanies(result map[string]float64, companies []companyInfo) []companyInfo {
+func (s *strategy) selectTopCompanies(result map[string]float64, companies []companyInfo, portfSize int) []companyInfo {
 	symbols := make([]string, 0, len(result))
 	for symbol := range result {
 		symbols = append(symbols, symbol)
@@ -159,11 +158,8 @@ func (s *strategy) selectTopCompanies(result map[string]float64, companies []com
 		return result[symbols[i]] > result[symbols[j]]
 	})
 
-	amount := int(math.Min(float64(s.portfolioSize), float64(len(result))))
+	amount := int(math.Min(float64(portfSize), float64(len(result))))
 	topCompaniesSymbols := symbols[0:amount]
-
-	droppedCompaniesSymbols := symbols[amount:]
-	log.Printf("Companies dropped during top selection: %s", droppedCompaniesSymbols)
 
 	topCompanies := make([]companyInfo, 0)
 
@@ -176,7 +172,6 @@ func (s *strategy) selectTopCompanies(result map[string]float64, companies []com
 		topCompanies = append(topCompanies, topCompany)
 	}
 
-	log.Printf("Top selected companies: %s", topCompaniesSymbols)
 	return topCompanies
 }
 
@@ -208,11 +203,11 @@ func getGrossProfitGrowth(company companyInfo, period string, date time.Time) (f
 	return growthReport.GrossProfitGrowth, nil
 }
 
-var periodNotSupported = errors.New("period not supported. Supported periods are: PeriodAnnual")
+var periodNotSupported = errors.New("period not supported. Supported periods are: periodAnnual")
 var companyGrowthNotFound = errors.New("could not find company growth report for given Date")
 
 func getGrowthReport(company companyInfo, period string, date time.Time) (FinancialGrowth, error) {
-	if period != PeriodAnnual {
+	if period != periodAnnual {
 		return FinancialGrowth{}, periodNotSupported
 	}
 	for _, growthReport := range company.growth {

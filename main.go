@@ -3,8 +3,8 @@ package main
 import "time"
 
 func main() {
-	from, _ := time.Parse(dateLayout, "2021-01-01")
-	to, _ := time.Parse(dateLayout, "2021-02-01")
+	from, _ := time.Parse(dateLayout, "2017-01-01")
+	to, _ := time.Parse(dateLayout, "2021-06-21")
 	screenStrategy := smaStrategy{}
 	screener := screener{
 		direction:         above,
@@ -14,24 +14,36 @@ func main() {
 
 	revGrowth12crit := criterion{
 		criterionType: revenueGrowth,
-		period:        PeriodAnnual,
+		period:        periodAnnual,
 		weight:        0.5,
 		direction:     highest,
 	}
 
 	profitGrowth12crit := criterion{
 		criterionType: grossProfitGrowth,
-		period:        PeriodAnnual,
+		period:        periodAnnual,
 		weight:        0.5,
 		direction:     highest,
 	}
 
 	strategy := strategy{
-		portfolioSize: 3,
-		criteria:      []criterion{revGrowth12crit, profitGrowth12crit},
+		criteria: []criterion{revGrowth12crit, profitGrowth12crit},
 	}
 
-	backtest := Backtest{screener, strategy}
+	// Degiro commision for US stocks
+	commision := commision{
+		fixed:    0.5,
+		perShare: 0.0034,
+	}
 
-	backtest.doBacktest([]string{"GOOG", "AAL", "INTC", "MSFT", "NVDA", "VRTX"}, from, to)
+	portfolio := portfolio{
+		commision: commision,
+		capital:   10000,
+		size:      3,
+		positions: make([]position, 0),
+	}
+
+	backtest := Backtest{screener, strategy, portfolio}
+
+	backtest.doBacktest([]string{"GOOG", "AAL", "INTC", "MSFT", "NVDA", "VRTX"}, from, to, 30)
 }

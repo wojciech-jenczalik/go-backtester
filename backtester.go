@@ -1,28 +1,38 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"time"
 )
 
 type Backtest struct {
 	screener
 	strategy
-	//portfolio
+	portfolio
 }
 
-func (b *Backtest) doBacktest(symbols []string, from time.Time, to time.Time) {
+func (b *Backtest) doBacktest(symbols []string, from time.Time, to time.Time, iterateForDays int) {
 	companies := prepareData(symbols, from, to, b.screener.periodInDays)
 
 	currentBacktestDate := from
 
 	for currentBacktestDate.Before(to) {
 		screenedCompanies := b.screener.screen(companies, currentBacktestDate)
-		topCompanies := b.strategy.evaluateTopCompanies(screenedCompanies, currentBacktestDate)
-		fmt.Printf("%+v\n", topCompanies)
-		break
+		topCompanies := b.strategy.evaluateTopCompanies(screenedCompanies, currentBacktestDate, b.portfolio.size)
+		newPositions, err := b.portfolio.calculateNewPositions(topCompanies, currentBacktestDate)
+		if err != nil {
+			currentBacktestDate = currentBacktestDate.AddDate(0, 0, iterateForDays)
+			continue
+		}
+		signals := b.portfolio.generateSignals(newPositions, currentBacktestDate)
+		err = b.portfolio.patchPortfolio(signals)
+		if err != nil {
+			currentBacktestDate = currentBacktestDate.AddDate(0, 0, iterateForDays)
+			continue
+		}
+		currentBacktestDate = currentBacktestDate.AddDate(0, 0, iterateForDays)
+		//log.Println(b.portfolio.calculatePortfolioValue(to))
 	}
+
 }
 
 func prepareData(symbols []string, from time.Time, to time.Time, screeningPeriod int) []companyInfo {
@@ -42,7 +52,6 @@ func gatherInfo(symbols []string, from time.Time, to time.Time) []companyInfo {
 	cmps := make([]companyInfo, len(symbols))
 
 	for i, tckr := range symbols {
-		log.Printf("Gathering information for %s... \n", tckr)
 		histPrice, err := GetHistoricalPrices(tckr, from, to)
 		if err != nil {
 			panic(err)
@@ -66,7 +75,6 @@ func gatherInfo(symbols []string, from time.Time, to time.Time) []companyInfo {
 			nil,
 			finGrowth,
 		}
-		log.Printf("Gathering information for %s completed.\n", tckr)
 	}
 
 	return cmps

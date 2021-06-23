@@ -21,5 +21,5 @@ func convertTimeToQuarters(from time.Time, to time.Time) (period string, limit i
 func convertTimeToYears(from time.Time, to time.Time) (period string, limit int) {
 	duration := to.Sub(from).Hours() / 24.0
 	limit = int(math.Ceil(duration / 30.0 / 12))
-	return PeriodAnnual, limit
+	return periodAnnual, limit
 }
